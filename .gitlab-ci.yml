@@ -3,7 +3,7 @@
 # DOCKER_PASSWORD
 variables:
   DOCKER_REGISTRY: "registry.gitlab.com"
-  DOCKER_REGISTRY_REPOSITORY_ID: "676642"
+  DOCKER_REGISTRY_REPOSITORY_ID: "990440"
   DOCKER_ORGANISATION: "systemkern"
   IMAGE_NAME: "gitlab-ce-dbaccess"
 
@@ -12,10 +12,9 @@ stages:
   - teardown
 
 before_script:
-  # Workaround for Gitlab Bug https://gitlab.com/gitlab-org/gitlab-runner/issues/1809
-  - export TAG="${CI_COMMIT_REF_SLUG}
+  - export TAG="${CI_COMMIT_REF_SLUG}"
   - if [ $TAG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
-  - export IMAGE_PATH="$DOCKER_REGISTRY/$DOCKER_ORGANISATION/$IMAGE_NAME:$TAG"
+  - export IMAGE_PATH="$DOCKER_REGISTRY/$DOCKER_ORGANISATION/$CI_PROJECT_NAME:$TAG"
   - echo "creating docker image ${IMAGE_NAME} for user ${DOCKER_USER}"
   - docker login ${DOCKER_REGISTRY} -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
   - echo "IMAGE_PATH=$IMAGE_PATH"
@@ -28,7 +27,7 @@ build:
     - docker:dind
   script:
     - docker login ${DOCKER_REGISTRY} -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
-    - docker build --quiet --tag "$IMAGE_PATH" -f Dockerfile-gitlab-ce-dbaccess .
+    - docker build --quiet --tag "$IMAGE_PATH" .
     - docker push "${IMAGE_PATH}"
   environment:
     name: $COMMIT_REF_SLUG

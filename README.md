@@ -4,19 +4,29 @@ MLReef-CE AIO (All in One)
 Running the MLReef AIO
 --------------------
 
-Execute following commands in sequence:
+To build the image execute: 
 ```bash
-docker build --tag mlreef-ce:latest .
-
-docker run --detach --hostname gitlab.example.com --publish 443:443 --publish 80:80 --publish 2222:22 --publish 127.0.0.1:5432:5432 --name gitlab --restart always mlreef-ce:latest
-
-docker ps -a #to verify container status, it takes some time to come in helthy state
+docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest .
 ```
 
+To run the image locally execute:
+```bash
+docker run --detach --rm --name gitlab  \
+    --hostname gitlab.example.com       \
+    --publish 80:80                     \
+    --publish 443:443                   \
+    --publish 2222:22                   \
+    --publish 127.0.0.1:5432:5432       \
+    -e GITLAB_ROOT_PASSWORD=password    \
+    registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
+```
 
+To verify container status, it takes some time to come in healthy state
+```bash
 $ sudo docker ps -a
 CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS                   PORTS                                                                                      NAMES
 bc4c269b8041        omnibus-pg1:latest   "/assets/wrapper"   15 minutes ago      Up 5 minutes (healthy)   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 127.0.0.1:5432->5432/tcp, 0.0.0.0:2222->22/tcp   gitlab
+```
 
 ### Verify Db connection from outside of container
 ```
