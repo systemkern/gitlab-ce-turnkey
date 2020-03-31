@@ -7,7 +7,6 @@ set -m
 
 /assets/wrapper &
 
-
 # Start the second script now
 /db_user_creation.sh
 

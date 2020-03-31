@@ -11,17 +11,23 @@ docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
 
 To run the image locally execute:
 ```bash
-docker run --detach --rm --name gitlab  \
-    --hostname gitlab.example.com       \
-    --publish 80:80                     \
-    --publish 443:443                   \
-    --publish 2222:22                   \
-    --publish 127.0.0.1:5432:5432       \
-    -e GITLAB_ROOT_PASSWORD=password    \
-    -e DB_NAME="db_name"                \
-    -e DB_USER="db_user"                \
-    -e DB_PASS="db_password"            \
-    registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
+docker stop gitlab | true
+docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest .
+docker run --name gitlab --rm --detach          \
+    --hostname gitlab.example.com               \
+    --publish 80:80                             \
+    --publish 443:443                           \
+    --publish 2222:22                           \
+    --publish 127.0.0.1:5432:5432               \
+    -e GITLAB_ROOT_PASSWORD=password            \
+    -e POSTGRES_SERVICE_HOST_NAME=localhost     \
+    -e DB_NAME="gitlabhq_production"            \
+    -e DB_USER="gitlab"                         \
+    -e POSTGRES_USER="postgres"                 \
+    -e POSTGRES_PASSWORD="securesqlpassword"    \
+    registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest \
+    && docker logs -f gitlab >> docker.log
+
 ```
 
 To verify container status, it takes some time to come in healthy state
