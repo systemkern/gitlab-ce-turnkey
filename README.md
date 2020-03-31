@@ -18,6 +18,9 @@ docker run --detach --rm --name gitlab  \
     --publish 2222:22                   \
     --publish 127.0.0.1:5432:5432       \
     -e GITLAB_ROOT_PASSWORD=password    \
+    -e DB_NAME="db_name"                \
+    -e DB_USER="db_user"                \
+    -e DB_PASS="db_password"            \
     registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
 ```
 
@@ -25,7 +28,7 @@ To verify container status, it takes some time to come in healthy state
 ```bash
 $ sudo docker ps -a
 CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS                   PORTS                                                                                      NAMES
-bc4c269b8041        omnibus-pg1:latest   "/assets/wrapper"   15 minutes ago      Up 5 minutes (healthy)   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 127.0.0.1:5432->5432/tcp, 0.0.0.0:2222->22/tcp   gitlab
+bc4c269b8041        omnibus-pg1:latest   "/wrapper_script.sh"   15 minutes ago      Up 5 minutes (healthy)   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 127.0.0.1:5432->5432/tcp, 0.0.0.0:2222->22/tcp   gitlab
 ```
 
 ### Verify Db connection from outside of container
@@ -44,7 +47,20 @@ postgres=# \l
                      |             |          |         |         | "gitlab-psql"=CTc/"gitlab-psql"
  template1           | gitlab-psql | UTF8     | C.UTF-8 | C.UTF-8 | =c/"gitlab-psql"               +
                      |             |          |         |         | "gitlab-psql"=CTc/"gitlab-psql"
-(4 rows)
+ db_name             | gitlab-psql | UTF8     | C.UTF-8 | C.UTF-8 | =Tc/"gitlab-psql"              +
+                     |             |          |         |         | "gitlab-psql"=CTc/"gitlab-psql"+
+                     |             |          |         |         | test_user=CTc/"gitlab-psql"
+(5 rows)
+
+postgres=# \du+
+                                              List of roles
+     Role name     |                         Attributes                         | Member of | Description
+-------------------+------------------------------------------------------------+-----------+-------------
+ gitlab            |                                                            | {}        |
+ gitlab-psql       | Superuser, Create role, Create DB, Replication, Bypass RLS | {}        |
+ gitlab_replicator | Replication                                                | {}        |
+ db_user           | Create DB                                                  | {}        |
+
 
 postgres=# show data_directory;
          data_directory          
@@ -65,7 +81,5 @@ postgres=#
 ### Verify the application
 
 in you browser navigate to http://localhost/
-
-
 
 
