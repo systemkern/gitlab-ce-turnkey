@@ -1,12 +1,3 @@
-# Variables provided by the repository
-# DOCKER_USER
-# DOCKER_PASSWORD
-variables:
-  DOCKER_REGISTRY: "registry.gitlab.com"
-  DOCKER_REGISTRY_REPOSITORY_ID: "990440"
-  DOCKER_ORGANISATION: "systemkern"
-  IMAGE_NAME: "gitlab-ce-dbaccess"
-
 stages:
   - build
   - teardown
@@ -14,19 +5,17 @@ stages:
 before_script:
   - export TAG="${CI_COMMIT_REF_SLUG}"
   - if [ $TAG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
-  - export IMAGE_PATH="$DOCKER_REGISTRY/$DOCKER_ORGANISATION/$CI_PROJECT_NAME:$TAG"
-  - echo "creating docker image ${IMAGE_NAME} for user ${DOCKER_USER}"
-  - docker login ${DOCKER_REGISTRY} -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
-  - echo "IMAGE_PATH=$IMAGE_PATH"
+  - export IMAGE_PATH="$CI_REGISTRY_IMAGE:$TAG"
+  - echo "Fully qualified docker image name is $IMAGE_PATH"
 
 
 build:
-  image: docker:latest
   stage: build
+  image: docker:latest
   services:
     - docker:dind
   script:
-    - docker login ${DOCKER_REGISTRY} -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
+    - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
     - docker build --quiet --tag "$IMAGE_PATH" .
     - docker push "${IMAGE_PATH}"
   environment:
@@ -35,16 +24,19 @@ build:
     on_stop: decomission
 
 
+# This job is called when a feature branch is merged or deleted.
+# It will take care of deleting the docker image from the registry
 decomission:
   when: manual
-  image: registry.gitlab.com/systemkern/s5:latest
   stage: teardown
+  image: registry.gitlab.com/systemkern/s5:latest
   variables:
-    GIT_STRATEGY: none
-    WORKAROUND: "PRIVATE-TOKEN:" # workaround to not break the yaml structure
+    GIT_STRATEGY: none                  # deactivate git checkout
+    TOKEN_NAME: "PRIVATE-TOKEN:"        # workaround to not break the yaml structure in _script_ section
+    REGISTRY_REPOSITORY_ID: "990440"    # Id of the Docker repo, necessary for deleting the image on decommission
   script:
-    - curl --request DELETE --header "$WORKAROUND $GITLAB_API_TOKEN"
-      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$DOCKER_REGISTRY_REPOSITORY_ID/tags/$TAG
+    - curl --request DELETE --header "$TOKEN_NAME $GITLAB_API_TOKEN"
+      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$REGISTRY_REPOSITORY_ID/tags/$TAG
   environment:
     name: $COMMIT_REF_SLUG
     action: stop
