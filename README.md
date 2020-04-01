@@ -1,7 +1,15 @@
-MLReef-CE AIO (All in One)
+Preconfigured Gitlab 
 ====================
 
-Running the MLReef AIO
+This Project helps in building a gitlab installation which is already preconfigured out of the box.
+
+This is achieved by allowing access to the postgres database, as well as by creating users and ci-runner registration tokens
+
+Further information can be found in the [official Gitlab documentation](https://docs.gitlab.com/omnibus/maintenance/)
+
+
+
+Running the Image
 --------------------
 
 To build the image execute: 
@@ -11,8 +19,9 @@ docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
 
 To run the image locally execute:
 ```bash
+image="gitlab-ce-preconfigured:nightly"
 docker stop gitlab | true
-docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest .
+docker build --tag $image .
 docker run --name gitlab --rm --detach          \
     --hostname gitlab.example.com               \
     --publish 80:80                             \
@@ -23,9 +32,9 @@ docker run --name gitlab --rm --detach          \
     -e POSTGRES_SERVICE_HOST_NAME=localhost     \
     -e DB_NAME="gitlabhq_production"            \
     -e DB_USER="gitlab"                         \
-    -e POSTGRES_USER="postgres"                 \
+    -e POSTGRES_USER="gitlab-psql"              \
     -e POSTGRES_PASSWORD="securesqlpassword"    \
-    registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest \
+    $image                                      \
     && docker logs -f gitlab >> docker.log
 
 ```

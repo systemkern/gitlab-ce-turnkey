@@ -33,6 +33,7 @@ decomission:
   variables:
     GIT_STRATEGY: none                  # deactivate git checkout
     TOKEN_NAME: "PRIVATE-TOKEN:"        # workaround to not break the yaml structure in _script_ section
+    MAINTAINER: "systemkern"
     REGISTRY_REPOSITORY_ID: "990440"    # Id of the Docker repo, necessary for deleting the image on decommission
   script:
     - curl --request DELETE --header "$TOKEN_NAME $GITLAB_API_TOKEN"
@@ -40,6 +41,8 @@ decomission:
   environment:
     name: $COMMIT_REF_SLUG
     action: stop
+  only:
+    - branches@$MAINTAINER/$CI_PROJECT_NAME
   except:
-    refs:
-      - master
+    - tags
+    - master@$MAINTAINER/$CI_PROJECT_NAME
