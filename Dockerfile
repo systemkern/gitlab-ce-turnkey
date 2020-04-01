@@ -5,8 +5,7 @@ MAINTAINER Systemkern
 ENV PGCONF_TEMP /opt/gitlab/embedded/cookbooks/postgresql/templates/default/postgresql.conf.erb
 ENV PGCONF /opt/gitlab/etc/gitlab.rb.template
 
-COPY db_user_creation.sh /
-COPY wrapper_script.sh /
+ADD configuration-wrapper.sh configure.sh /
 
 # Provide executable permission to script files
 # Edit the Postgres configuration to be able external access to the Database
@@ -22,5 +21,5 @@ EXPOSE 5432
 
 
 # Wrapper to handle additional script to run after default gitlab image's /assets/wrapper
-CMD ["/wrapper_script.sh"]
+CMD ["/configuration-wrapper.sh"]
 
