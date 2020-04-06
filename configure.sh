@@ -64,7 +64,7 @@ VAR="f"
 echo "gitlab-db-config $(date): Step 2 - Waiting for gitlab structure to be created."
 # The "t" and "f" - are results of PostgresSQL function "exists()". See using above. So if the the table exists in the database the function returns "t". If doesn't then "f"
 while [ $VAR != "t" ]; do
-  sleep 5
+  sleep 3
   VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT table_name FROM information_schema.tables where table_name='personal_access_tokens')")
   echo "gitlab-db-config $(date): Waiting for Gitlab's to create table 'personal_access_token': $VAR"
 done
@@ -76,7 +76,7 @@ VAR="f"
 while [ $VAR != "t" ]; do
   VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT table_name FROM information_schema.tables where table_name='users')")
   echo "gitlab-db-config $(date): Waiting for Gitlab's to create table 'users': $VAR"
-  sleep 5
+  sleep 3
 done
 echo "gitlab-db-config $(date): Found table table 'users': $VAR"
 
@@ -85,7 +85,7 @@ echo "gitlab-db-config $(date): Found table table 'users': $VAR"
 VAR="f"
 while [ $VAR != "t" ]; do
   echo "gitlab-db-config $(date): Waiting for Gitlab's to create root user: $VAR"
-  sleep 5
+  sleep 3
   VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT id FROM public.users where id=1)")
 done
 echo "gitlab-db-config $(date): Found Gitlab's root user with id = 1: $VAR"
@@ -95,11 +95,10 @@ echo "gitlab-db-config $(date): Found Gitlab's root user with id = 1: $VAR"
 ########################################
 # Create custom database entries
 ########################################
-echo "gitlab-db-config $(date): Gitlab structure is created. Waiting 15 sec for it to be completed..."
-sleep 15
+echo "gitlab-db-config $(date): Gitlab structure is created. Waiting 10 sec for it to be completed..."
+sleep 10
 echo "gitlab-db-config $(date): Step 3 - create entities"
 
-VAR="f"
 VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT id FROM public.personal_access_tokens where \"name\"='admin-api-token')")
 if [ "$VAR" != "t" ]; then
   echo "gitlab-db-config $(date): No Admin token found...will be created"

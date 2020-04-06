@@ -14,6 +14,8 @@ build:
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - cat configure.sh
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
     - chmod +x bin/make.sh
@@ -34,7 +36,6 @@ decomission:
   variables:
     GIT_STRATEGY: none                  # deactivate git checkout
     TOKEN_NAME: "PRIVATE-TOKEN:"        # workaround to not break the yaml structure in _script_ section
-    MAINTAINER: "systemkern"
     REGISTRY_REPOSITORY_ID: "990440"    # Id of the Docker repo, necessary for deleting the image on decommission
   script:
     - bin/make.sh --parse #parse environment variables
@@ -45,4 +46,4 @@ decomission:
     action: stop
   except:
     - tags
-    - master@$MAINTAINER/$CI_PROJECT_NAME
+    - master
