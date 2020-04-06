@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-LOCKFILE="/configuration.lock"
-touch $LOCKFILE
-
 ########################################
 # Checking Input Parameters
 ########################################
@@ -23,6 +20,8 @@ if [ "$GITLAB_SECRETS_DB_KEY_BASE" = "" ]; then
   exit 1
 fi
 
+#
+#
 ########################################
 # Waiting for Postgres startup
 ########################################
@@ -36,11 +35,12 @@ while ! pg_isready -U $POSTGRES_USER -h $POSTGRES_SERVICE_HOST_NAME >/dev/null 2
 done
 echo "gitlab-db-config $(date): Postgresql is ready! :)"
 
-echo "gitlab-db-config $(date): Creating a database and a user for Gitlab..."
-
+#
+#
 ########################################
 # Ensuring access parameters
 ########################################
+echo "gitlab-db-config $(date): Creating a database and database schema '$DB_NAME' and user '$DB_USER' for Gitlab as posgres"
 PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" |
   grep -q 1 ||
   PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h $POSTGRES_SERVICE_HOST_NAME -d postgres -c "CREATE DATABASE $DB_NAME ENCODING = 'UTF8' TABLESPACE = pg_default;"
@@ -55,6 +55,8 @@ PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_U
 
 PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d postgres -c "ALTER USER $DB_USER CREATEDB;"
 
+#
+#
 ########################################
 # Waiting for necessary database tables
 ########################################
@@ -65,7 +67,6 @@ while [ $VAR != "t" ]; do
   sleep 5
   VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT table_name FROM information_schema.tables where table_name='personal_access_tokens')")
   echo "gitlab-db-config $(date): Waiting for Gitlab's to create table 'personal_access_token': $VAR"
-  VAR="t"
 done
 echo "gitlab-db-config $(date): Found table table 'personal_access_token': $VAR"
 
@@ -73,9 +74,9 @@ echo "gitlab-db-config $(date): Found table table 'personal_access_token': $VAR"
 #
 VAR="f"
 while [ $VAR != "t" ]; do
+  VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT table_name FROM information_schema.tables where table_name='users')")
   echo "gitlab-db-config $(date): Waiting for Gitlab's to create table 'users': $VAR"
   sleep 5
-  VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT table_name FROM information_schema.tables where table_name='users')")
 done
 echo "gitlab-db-config $(date): Found table table 'users': $VAR"
 
@@ -102,11 +103,14 @@ VAR="f"
 VAR=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVICE_HOST_NAME -U $POSTGRES_USER -d $DB_NAME -tc "SELECT exists(SELECT id FROM public.personal_access_tokens where \"name\"='admin-api-token')")
 if [ "$VAR" != "t" ]; then
   echo "gitlab-db-config $(date): No Admin token found...will be created"
+  echo "gitlab-db-config $(date): Basing token on $GITLAB_ADMIN_TOKEN"
 
-  salt=$(echo $GITLAB_SECRETS_DB_KEY_BASE | cut -c1-32)
-  token=$GITLAB_ADMIN_TOKEN$salt
-  token_digest=$(echo $token | openssl sha256 -binary | base64 -)
-  echo2 Created new token_digest: $token_digest
+  # Do _NOT_ put quotes around these variables
+  # It will change the handling by the parser and lead to wrong digest and thus unusable tokens
+  SALT=$(echo $GITLAB_SECRETS_DB_KEY_BASE | cut -c1-32)
+  TOKEN=$GITLAB_ADMIN_TOKEN$SALT
+  TOKEN_DIGEST=$(echo $TOKEN | openssl sha256 -binary | base64 -)
+  echo "gitlab-db-config $(date): Created new TOKEN_digest: $TOKEN_DIGEST"
 
   sql_truncate="TRUNCATE TABLE public.personal_access_tokens;"
   sql_insert="INSERT INTO public.personal_access_tokens (id,user_id,\"name\",revoked,expires_at,created_at,updated_at,scopes,impersonation,token_digest) VALUES (1,1,'admin-api-token',false,NULL,'2019-12-10','2019-12-10','---
@@ -114,28 +118,26 @@ if [ "$VAR" != "t" ]; then
     - read_user
     - read_repository
     - write_repository
-    - sudo',false,'FQuUQXUpDuWJgNyTZLXw8ev7y1O66MbaoaF5JuQmr7w=');"
-
-  sql_update="UPDATE public.personal_access_tokens SET token_digest='$token_digest' WHERE id=1;"
-  sql_select="SELECT id,user_id,\"name\",created_at,impersonation,token_digest FROM public.personal_access_tokens;"
+    - sudo',false,'$TOKEN_DIGEST');"
 
   echo "gitlab-db-config $(date): ############################################"
   echo "gitlab-db-config $(date): Updating token Next lines MUST have \"UPDATE 1\" otherwise there was an error\n"
 
   PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h "$POSTGRES_SERVICE_HOST_NAME" -d "$DB_NAME" -c "$sql_truncate"
   PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h "$POSTGRES_SERVICE_HOST_NAME" -d "$DB_NAME" -c "$sql_insert"
-  PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h "$POSTGRES_SERVICE_HOST_NAME" -d "$DB_NAME" -c "$sql_update"
-  exit_value=$?
+  #sql_update="UPDATE public.personal_access_tokens SET token_digest='$TOKEN_DIGEST' WHERE id=1;"
+  #PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h "$POSTGRES_SERVICE_HOST_NAME" -d "$DB_NAME" -c "$sql_update"
+  #exit_value=$?
+  sql_select="SELECT id,user_id,\"name\",created_at,impersonation,token_digest FROM public.personal_access_tokens;"
   PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h "$POSTGRES_SERVICE_HOST_NAME" -d "$DB_NAME" -c "$sql_select"
 
-  if [ $exit_value -ne 0 ]; then
-    echo "gitlab-db-config $(date): ERROR SQL UPDATE was not successfull $exit_value"
-  else
-    echo "gitlab-db-config $(date): SUCCESS"
-  fi
+  #if [ $exit_value -ne 0 ]; then
+  #  echo "gitlab-db-config $(date): ERROR SQL UPDATE was not successfull $exit_value"
+  #else
+  #  echo "gitlab-db-config $(date): SUCCESS"
+  #fi
 else
   echo "Found an Admin token in Gitlab's database with where name ='admin-api-token': $VAR"
 fi
 
-rm -f $LOCKFILE | true
 echo "gitlab-db-config $(date): Script finished"

@@ -27,7 +27,10 @@ fi
 /assets/wrapper >/dev/null &
 
 # Start the second script now
-/configure.sh >/var/log/configure.log 2>&1
+touch /var/log/configuration.lock
+touch /var/log/configuration.log
+/configure.sh >/var/log/configuration.log 2>&1
+rm -f /var/log/configuration.lock
 
 #Bring the first process to foreground
 fg %1

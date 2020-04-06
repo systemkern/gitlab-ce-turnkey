@@ -13,13 +13,14 @@ RUN chmod +x /configuration-wrapper.sh /configure.sh
 # The original line in PGCONF_TEMP is
 #     listen_addresses = '<%= @listen_address %>'    # what IP address(es) to listen on;
 # The original line in PGCONF is
-RUN sed -i  "s/<%= @listen_address %>/*/g" ${PGCONF_TEMP}      && \
+RUN sed -i "s/<%= @listen_address %>/*/g" ${PGCONF_TEMP}      && \
     sed -i "s/#.*postgresql.*trust_auth_cidr_addresses.*/postgresql\['trust_auth_cidr_addresses'\] = \[\"0\.0\.0\.0\/0\"\]/g" ${PGCONF}
 
 # Expose postgres
 EXPOSE 5432
 
+# Volumes defined by parent image:
+# VOLUME ["/etc/gitlab", "/var/opt/gitlab", "/var/log/gitlab"]
 
 # Wrapper to handle additional script to run after default gitlab image's /assets/wrapper
 CMD ["/configuration-wrapper.sh"]
-

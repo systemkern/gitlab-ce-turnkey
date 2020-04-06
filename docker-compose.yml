@@ -1,0 +1,41 @@
+# original source: https://github.com/sameersbn/docker-gitlab/blob/master/docker-compose.yml
+version: '3.5'
+
+# please research https://docs.docker.com/compose/environment-variables/ for howto setup your environment
+services:
+  gitlab:
+    container_name: gitlab
+    restart: always
+    image: registry.gitlab.com/systemkern/gitlab-ce-preconfigured:12-7-0
+    ports:
+      - "10080:80"
+      - "10022:22"
+      - "5432:5432"
+    volumes:
+      - gitlab-data:/var/opt/gitlab:Z
+    env_file: local.env
+    environment:
+      - DEBUG=true
+
+      - TZ=Austria/Vienna
+      - GITLAB_TIMEZONE=Vienna
+      - GITLAB_HTTPS=false
+      - SSL_SELF_SIGNED=false
+
+      - GITLAB_HOST=gitlab
+      - GITLAB_PORT=80
+      - GITLAB_SSH_PORT=10022
+      - GITLAB_RELATIVE_URL_ROOT=
+
+      - GITLAB_ROOT_PASSWORD=password
+      - GITLAB_ROOT_EMAIL=
+      - POSTGRES_SERVICE_HOST_NAME=localhost
+      - DB_NAME=gitlabhq_production
+      - DB_USER=gitlab
+      #      - DB_PASS=password                                             # Not sure if this is needed
+      - POSTGRES_USER=gitlab-psql
+      - POSTGRES_PASSWORD=securesqlpassword
+
+volumes:
+  sock:
+  gitlab-data

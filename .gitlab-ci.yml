@@ -2,12 +2,12 @@ stages:
   - build
   - teardown
 
+
 before_script:
   - export TAG="${CI_COMMIT_REF_SLUG}"
-  - if [ $TAG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
+  - if [ $TAG == "master" ]; then TAG="latest";  fi
   - export IMAGE_PATH="$CI_REGISTRY_IMAGE:$TAG"
-  - echo "Fully qualified docker image name is $IMAGE_PATH"
-
+  - echo "Fully qualified docker image name is '$IMAGE_PATH'"
 
 build:
   stage: build
@@ -16,7 +16,8 @@ build:
     - docker:dind
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
-    - docker build --quiet --tag "$IMAGE_PATH" .
+    - chmod +x bin/make.sh
+    - bin/make.sh
     - docker push "${IMAGE_PATH}"
   environment:
     name: $COMMIT_REF_SLUG
@@ -36,13 +37,12 @@ decomission:
     MAINTAINER: "systemkern"
     REGISTRY_REPOSITORY_ID: "990440"    # Id of the Docker repo, necessary for deleting the image on decommission
   script:
+    - bin/make.sh --parse #parse environment variables
     - curl --request DELETE --header "$TOKEN_NAME $GITLAB_API_TOKEN"
       https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$REGISTRY_REPOSITORY_ID/tags/$TAG
   environment:
     name: $COMMIT_REF_SLUG
     action: stop
-  only:
-    - branches@$MAINTAINER/$CI_PROJECT_NAME
   except:
     - tags
     - master@$MAINTAINER/$CI_PROJECT_NAME
