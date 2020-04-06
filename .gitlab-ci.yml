@@ -14,8 +14,6 @@ build:
   image: docker:latest
   services:
     - docker:dind
-  before_script:
-    - cat configure.sh
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
     - chmod +x bin/make.sh
