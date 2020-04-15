@@ -27,10 +27,8 @@ parse() {
 # Parse flags
 while [ -n "$1" ]; do
   case "$1" in
-  -p | --parse)
-    echo "Parsing $CI_COMMIT_REF_SLUG"
-    prepare
-    exit 0
+  -p | --push)
+    PUSH="true"
     ;;
   *) echo "Option $1 not recognized" ;;
   esac
@@ -43,3 +41,7 @@ if [ "$IMAGE_PATH" = "" ]; then
 fi
 
 docker build --tag "$IMAGE_PATH" .
+
+if [ "$PUSH" = "true" ]; then
+  docker push "${IMAGE_PATH}"
+fi
