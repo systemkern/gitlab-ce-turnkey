@@ -26,7 +26,7 @@ touch /var/log/configuration.log
 
   gitlab-runner register --non-interactive \
     --url="http://localhost:80/" \
-    --docker-network-mode mlreef-docker-network \
+    --docker-network-mode docker-network \
     --registration-token "$TOKEN" \
     --executor "docker" \
     --docker-image alpine:latest \

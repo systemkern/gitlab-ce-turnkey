@@ -1,5 +1,6 @@
 stages:
   - build
+  - build-tier-2
   - teardown
 
 latest:
@@ -31,6 +32,15 @@ latest:
     auto_stop_in: 1 month                                                     # decommission all environments automatically
     on_stop: decomission                                                      # master will never be decommissioned
 
+dev:
+  extends: latest
+  stage: build-tier-2
+  only:
+    changes:
+      - src/**/*
+      - Dockerfile-latest
+      - Dockerfile-dev
+
 
 # This job is called when a feature branch is merged or deleted.
 # It will take care of deleting the docker images from the registry
@@ -58,6 +68,8 @@ decomission:
       )
     - curl --request DELETE --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
       https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$CONTAINER_REPO_ID/tags/$CI_COMMIT_REF_SLUG
+      - curl --request DELETE --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
+      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$CONTAINER_REPO_ID/tags/$CI_COMMIT_REF_SLUG-dev
   environment:
     name: $CI_COMMIT_REF_SLUG                                                 # https://gitlab.com/systemkern/s5/environments
     action: stop
