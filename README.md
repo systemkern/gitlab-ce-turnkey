@@ -46,24 +46,14 @@ docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest
 To build and run the image locally execute:
 ```bash
 image="gitlab-ce-preconfigured:nightly"
-docker stop gitlab | true
+docker stop gitlab-ce | true
 docker build --tag $image .
-docker run --name gitlab --rm --detach              \
+docker run --name gitlab-ce --rm --detach           \
     --hostname gitlab.example.com                   \
-    --publish 80:80                                 \
-    --publish 443:443                               \
-    --publish 2222:22                               \
-    --publish 127.0.0.1:5432:5432                   \
+    --publish 81:80                                 \
     -e GITLAB_ROOT_PASSWORD=password                \
-    -e POSTGRES_SERVICE_HOST_NAME=localhost         \
-    -e DB_NAME="gitlabhq_production"                \
-    -e DB_USER="gitlab"                             \
-    -e POSTGRES_USER="gitlab-psql"                  \
-    -e POSTGRES_PASSWORD="securesqlpassword"        \
     -e GITLAB_ADMIN_TOKEN="QVj_FkeHyuJURko2ggZT"    \
-    -e GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
     $image                                          \
-    && docker logs -f gitlab >> docker.log
 
 ```
 
