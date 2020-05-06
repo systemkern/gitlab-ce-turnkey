@@ -1,39 +1,55 @@
 stages:
   - build
-  - teardown
 
 
-build:
-  stage: build
+latest:
   image: docker:latest
+  stage: build
+  only:
+    changes:
+      - src/**/*
+      - .gitlab-ci.yml
+      - Dockerfile
   services:
     - docker:dind
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
-    - chmod +x bin/make.sh
-    - bin/make.sh --push
+    - export TAG="${CI_COMMIT_REF_SLUG}"
+    - if [ $CI_COMMIT_REF_SLUG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
+    - docker build --quiet --tag "$CI_REGISTRY_IMAGE:$TAG" -f Dockerfile .
+    - docker push "$CI_REGISTRY_IMAGE:$TAG"
   environment:
-    name: $COMMIT_REF_SLUG
+    name: $CI_COMMIT_REF_SLUG                                                 # https://gitlab.com/systemkern/s5/environments
     url: $CI_PROJECT_URL/container_registry#$CI_COMMIT_REF_SLUG
-    on_stop: decomission
+    auto_stop_in: 1 month                                                     # decommission all environments automatically
+    on_stop: undeploy                                                         # master will never be decommissioned
 
 
 # This job is called when a feature branch is merged or deleted.
-# It will take care of deleting the docker image from the registry
-decomission:
+# It will take care of deleting the docker images from the registry
+# This JOB is configured so it requires the presence of an API token
+# provided as environment variable "GITLAB_COM_API_TOKEN"
+undeploy:
+  stage: build
   when: manual
-  stage: teardown
+  except:
+    refs:
+      - master
   image: registry.gitlab.com/systemkern/s5:latest
   variables:
-    GIT_STRATEGY: none                  # deactivate git checkout
-    TOKEN_NAME: "PRIVATE-TOKEN:"        # workaround to not break the yaml structure in _script_ section
-    REGISTRY_REPOSITORY_ID: "990440"    # Id of the Docker repo, necessary for deleting the image on decommission
+    GIT_STRATEGY: none
+    COLON: ":" # workaround to preserve the yaml structure (because of the ":")
+  before_script:
+    # Require Gitlab API token or this job
+    - if [ "$GITLAB_COM_API_TOKEN" = "" ]; then exit 0; fi
   script:
-    - curl --request DELETE --header "$TOKEN_NAME $GITLAB_API_TOKEN"
-      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$REGISTRY_REPOSITORY_ID/tags/${CI_COMMIT_REF_SLUG}
+    # Get the registry repository ID from the Gitlab API
+    - CONTAINER_REPO_ID=$(curl --silent --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
+      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/
+      | jq -r .[0].id
+      )
+    - curl --request DELETE --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
+      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$CONTAINER_REPO_ID/tags/$CI_COMMIT_REF_SLUG
   environment:
-    name: $COMMIT_REF_SLUG
+    name: $CI_COMMIT_REF_SLUG                                                 # https://gitlab.com/systemkern/s5/environments
     action: stop
-  except:
-    - tags
-    - master
