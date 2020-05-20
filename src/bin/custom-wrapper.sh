@@ -22,10 +22,13 @@ touch /var/log/configuration.log
   TOKEN=$(gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token" | tr -d '\r')
   echo TOKEN="$TOKEN"
 
+  CONTAINER_IP=$(hostname -I | awk '{print $1}')
+  echo "Container IP : $CONTAINER_IP"
+
   echo "### Configuring gitlab runner for localhost:$GITLAB_PORT"
 
   gitlab-runner register --non-interactive \
-    --url="http://localhost:80/" \
+    --url="http://gitlab.localhost:80/" \
     --docker-network-mode docker-network \
     --registration-token "$TOKEN" \
     --executor "docker" \
@@ -34,7 +37,8 @@ touch /var/log/configuration.log
     --description "Packaged Runner" \
     --run-untagged="true" \
     --locked="false" \
-    --access-level="not_protected"
+    --access-level="not_protected" \
+    --docker-extra-hosts "gitlab.localhost:$CONTAINER_IP"
 
   gitlab-runner start
 

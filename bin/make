@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #
 #
@@ -40,9 +40,22 @@ echo "Fully qualified docker image name is '$IMAGE_PATH'"
 docker build -f Dockerfile-latest --tag "$IMAGE_PATH" .
 
 if [ "$RUN" = "true" ]; then
+  ### Set host level configs
+  GITLAB_FILEMAX=1000000
+  [[ $(cat /proc/sys/fs/file-max) -lt ${GITLAB_FILEMAX} ]] && echo $GITLAB_FILEMAX > /proc/sys/fs/file-max
+
+  ### Create docker-network if already not there
+  docker network inspect docker-network >/dev/null 2>&1 || \
+  docker network create -d bridge docker-network
+  
   echo "Starting container. Gitlab will be available at http://localhost:81"
   docker run --rm --name gitlab-aio                     \
-    --publish 81:80                                     \
+    --hostname gitlab.localhost \
+    --net docker-network \
+    --publish 127.0.0.1:81:80                                     \
     --volume /var/run/docker.sock:/var/run/docker.sock  \
+    --volume /srv/gitlab/config:/etc/gitlab \
+    --volume /srv/gitlab/logs:/var/log/gitlab \
+    --volume /srv/gitlab/data:/var/opt/gitlab \
     "$IMAGE_PATH"
 fi
