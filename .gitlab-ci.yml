@@ -14,8 +14,8 @@ build turnkey:
       # define the gitlab versions to build
       - TAG:
         - "latest"
-        - "gitlab-ce:12.7.0-ce.0"
+        - "12.7.0-ce.0"
   script:
-    - sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" /Dockerfile
+    - sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" Dockerfile
     - docker build --quiet --tag "$CI_REGISTRY_IMAGE:$TAG" .
     - docker push "$CI_REGISTRY_IMAGE:$TAG"
