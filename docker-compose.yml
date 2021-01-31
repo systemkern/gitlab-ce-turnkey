@@ -6,9 +6,10 @@ services:
   gitlab:
     container_name: gitlab
     restart: always
-    image: registry.gitlab.com/systemkern/gitlab-aio:latest
+    image: registry.gitlab.com/systemkern/gitlab-ce-turnkey:latest
     ports:
-      - "81:80"
+      - "80:80"
+      - "443:443"
       - "2222:22"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -20,13 +21,10 @@ services:
       - GITLAB_TIMEZONE=Vienna
       - GITLAB_HTTPS=false
       - SSL_SELF_SIGNED=false
-
-      - GITLAB_SSH_PORT=10022
+      - GITLAB_SSH_PORT=2022
       - GITLAB_RELATIVE_URL_ROOT=
-
       - GITLAB_ROOT_PASSWORD=password
       - GITLAB_ROOT_EMAIL=
-
       - GITLAB_SECRETS_SECRET_KEY_BASE=secret11111111112222222222333333333344444444445555555555666666666612345
       - GITLAB_SECRETS_OTP_KEY_BASE=secret11111111112222222222333333333344444444445555555555666666666612345
       - GITLAB_SECRETS_DB_KEY_BASE=secret11111111112222222222333333333344444444445555555555666666666612345

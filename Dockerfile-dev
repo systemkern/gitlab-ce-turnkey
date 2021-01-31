@@ -1,5 +1,5 @@
 # https://gitlab.com/gitlab-org/omnibus-gitlab/-/tree/master/docker
-FROM registry.gitlab.com/systemkern/gitlab-ce-allinone:latest
+FROM registry.gitlab.com/systemkern/gitlab-ce-turnkey:latest
 MAINTAINER Systemkern
 
 

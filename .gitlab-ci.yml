@@ -1,75 +1,21 @@
-stages:
-  - build
-  - build-tier-2
-  - teardown
-
-latest:
+build turnkey:
   image: docker:latest
   stage: build
   only:
+    refs: [ "master" ]
     changes:
-      - src/**/*
+      - assets/**/*
       - .gitlab-ci.yml
       - Dockerfile
   services:
     - docker:dind
+  parallel:
+    matrix:
+      # define the gitlab versions to build
+      - TAG:
+        - "latest"
+        - "gitlab-ce:12.7.0-ce.0"
   script:
-    - export TAG="${CI_COMMIT_REF_SLUG}"
-    - if [ $CI_COMMIT_REF_SLUG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
-    - if [ $CI_JOB_NAME != "latest" ]; then TAG="$TAG-$CI_JOB_NAME";  fi      # follow docker naming conventions
-    # Rewrite current Dockerfile in each job
-    - if [ $CI_COMMIT_REF_SLUG != "master" ]; then sed -i "s/s5:latest/s5:$CI_COMMIT_REF_SLUG/" Dockerfile-$CI_JOB_NAME; fi
-    - cat Dockerfile-$CI_JOB_NAME
-
-    - echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} --username=${CI_REGISTRY_USER} --password-stdin
-    - export TAG="${CI_COMMIT_REF_SLUG}"
-    - if [ $CI_COMMIT_REF_SLUG == "master" ]; then TAG="latest";  fi          # follow docker naming conventions
-    - docker build --quiet --tag "$CI_REGISTRY_IMAGE:$TAG" -f Dockerfile-$CI_JOB_NAME .
+    - sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" /Dockerfile
+    - docker build --quiet --tag "$CI_REGISTRY_IMAGE:$TAG" .
     - docker push "$CI_REGISTRY_IMAGE:$TAG"
-  environment:
-    name: $CI_COMMIT_REF_SLUG                                                 # https://gitlab.com/systemkern/s5/environments
-    url: $CI_PROJECT_URL/container_registry#$CI_COMMIT_REF_SLUG
-    auto_stop_in: 1 month                                                     # decommission all environments automatically
-    on_stop: decomission                                                      # master will never be decommissioned
-
-dev:
-  extends: latest
-  stage: build-tier-2
-  only:
-    changes:
-      - src/**/*
-      - Dockerfile-latest
-      - Dockerfile-dev
-
-
-# This job is called when a feature branch is merged or deleted.
-# It will take care of deleting the docker images from the registry
-# This JOB is configured so it requires the presence of an API token
-# provided as environment variable "GITLAB_COM_API_TOKEN"
-decomission:
-  stage: teardown
-  when: manual
-  except:
-    refs:
-      - master
-      - tags
-  image: registry.gitlab.com/systemkern/s5:latest
-  variables:
-    GIT_STRATEGY: none
-    COLON: ":" # workaround to preserve the yaml structure (because of the ":")
-  before_script:
-    # Require Gitlab API token or this job
-    - if [ "$GITLAB_COM_API_TOKEN" = "" ]; then echo "Error!Gitlab API token not found."; exit 1; fi
-  script:
-    # Get the registry repository ID from the Gitlab API
-    - CONTAINER_REPO_ID=$(curl --silent --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
-      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/
-      | jq -r .[0].id
-      )
-    - curl --request DELETE --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
-      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$CONTAINER_REPO_ID/tags/$CI_COMMIT_REF_SLUG
-      - curl --request DELETE --header "PRIVATE-TOKEN$COLON $GITLAB_COM_API_TOKEN"
-      https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/registry/repositories/$CONTAINER_REPO_ID/tags/$CI_COMMIT_REF_SLUG-dev
-  environment:
-    name: $CI_COMMIT_REF_SLUG                                                 # https://gitlab.com/systemkern/s5/environments
-    action: stop

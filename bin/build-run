@@ -1,0 +1,31 @@
+#!/bin/bash
+# change to the repository root folder via the scripts location
+cd "$(dirname "$0")"/..
+########################################
+set -e # exit on immediately on every error
+set -o pipefail
+set -u # error on usage of undefined variables
+set -x # output all commands
+########################################
+
+
+docker build --tag gitlab-ce-turnkey:snapshot .
+
+docker run --rm -it --name gitlab-turnkey               \
+    --network  bridge                                   \
+    --hostname gitlab.example.com                       \
+    --publish "80:80"                                   \
+    --publish "443:443"                                 \
+    --publish "2222:22"                                 \
+    --publish "127.0.0.1:5432:5432"                     \
+    --volume /var/run/docker.sock:/var/run/docker.sock  \
+    --volume gitlab-opt:/var/opt                        \
+    --env GITLAB_ROOT_PASSWORD=password                 \
+    --env POSTGRES_SERVICE_HOST_NAME=localhost          \
+    --env DB_NAME="gitlabhq_production"                 \
+    --env DB_USER="gitlab"                              \
+    --env POSTGRES_USER="gitlab-psql"                   \
+    --env POSTGRES_PASSWORD="securesqlpassword"         \
+    --env GITLAB_ADMIN_TOKEN="test-admin-token"         \
+    --env GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
+  gitlab-ce-turnkey:snapshot

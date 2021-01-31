@@ -5,21 +5,22 @@ MAINTAINER Systemkern
 ENV PGCONF_TEMP /opt/gitlab/embedded/cookbooks/postgresql/templates/default/postgresql.conf.erb
 ENV PGCONF /opt/gitlab/etc/gitlab.rb.template
 
-ADD src/bin/custom-wrapper.sh /
-RUN chmod +x /custom-wrapper.sh
-
-
+###
+### GITLAB RUNNER
+###
 # Install Gitlab Runner in Docker container
 # https://docs.gitlab.com/runner/install/linux-manually.html
-ENV ARCH amd64
 RUN apt-get update                          && \
     curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash  && \
     apt-get install --yes gitlab-runner     && \
     apt-get clean                           && \
     gitlab-runner --version
+ADD assets/ /assets/
+RUN chmod +x /assets/turnkey-wrapper.sh
+
 
 # Volumes defined by parent image:
 # VOLUME ["/etc/gitlab", "/var/opt/gitlab", "/var/log/gitlab"]
 
 # Wrapper to handle additional script to run after default gitlab image's /assets/wrapper
-CMD ["/custom-wrapper.sh"]
+CMD ["/assets/turnkey-wrapper.sh"]

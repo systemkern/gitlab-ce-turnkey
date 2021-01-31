@@ -1,13 +1,27 @@
 #!/bin/bash
 set -m
 
+
+### The script exports environment variables created from ENV of Dockerfile.
+### These needs to be part of wrapper as if at run time any base ENV is replaced by -e ,
+###   it does not change other ENV variables created from them
+### This script gets copied to /etc/bash.bashrc to set env after docker run
+
+
+### Gitlab dynamic variables created from ENV mentioned in Dockerfile
+export INSTANCE_HOST="localhost"
+export GITLAB_ROOT_URL="http://$INSTANCE_HOST:80"
+
+export GITLAB_OMNIBUS_CONFIG="\
+    external_url '$GITLAB_ROOT_URL';                                \
+    nginx['redirect_http_to_https'] = false;                        \
+    "
+
 # Start the first script that comes with gitlab image in background, as it never ends, it waits for all child process sigterm,
 # We can not run our script after checking it's exit status.
-
 /assets/wrapper >/dev/null &
 
 # Wait for Gitlab to enable the database
-
 touch /var/log/configuration.lock
 touch /var/log/configuration.log
 {
@@ -23,26 +37,26 @@ touch /var/log/configuration.log
   echo TOKEN="$TOKEN"
 
   CONTAINER_IP=$(hostname -I | awk '{print $1}')
-  echo "Container IP : $CONTAINER_IP"
+  echo "Container IP is: $CONTAINER_IP"
 
   echo "### Configuring gitlab runner for localhost:$GITLAB_PORT"
 
-  gitlab-runner register --non-interactive \
-    --url="http://gitlab.localhost:80/" \
-    --docker-network-mode docker-network \
-    --registration-token "$TOKEN" \
-    --executor "docker" \
-    --docker-image alpine:latest \
+  gitlab-runner register --non-interactive  \
+    --url="http://localhost:80/"            \
+    --docker-network-mode bridge            \
+    --registration-token "$TOKEN"           \
+    --executor "docker"                     \
+    --docker-image alpine:latest            \
     --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
-    --description "Packaged Runner" \
-    --run-untagged="true" \
-    --locked="false" \
-    --access-level="not_protected" \
-    --docker-extra-hosts "gitlab.localhost:$CONTAINER_IP"
+    --description "Packaged Runner"         \
+    --run-untagged="true"                   \
+    --locked="false"                        \
+    --access-level="not_protected"          \
+    --docker-extra-hosts "$INSTANCE_HOST:$CONTAINER_IP"
 
   gitlab-runner start
-
 } >/var/log/configuration.log
+
 rm -f /var/log/configuration.lock
 
 #Bring the first process to foreground
