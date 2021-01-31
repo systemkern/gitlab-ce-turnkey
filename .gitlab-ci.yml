@@ -17,5 +17,6 @@ build turnkey:
         - "12.7.0-ce.0"
   script:
     - sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" Dockerfile
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username="$CI_REGISTRY_USER" --password-stdin
     - docker build --quiet --tag "$CI_REGISTRY_IMAGE:$TAG" .
     - docker push "$CI_REGISTRY_IMAGE:$TAG"
