@@ -9,7 +9,6 @@ set -m
 
 
 ### Gitlab dynamic variables created from ENV mentioned in Dockerfile
-export INSTANCE_HOST="localhost"
 export GITLAB_ROOT_URL="http://$INSTANCE_HOST:80"
 
 export GITLAB_OMNIBUS_CONFIG="\
@@ -39,8 +38,7 @@ touch /var/log/configuration.log
   CONTAINER_IP=$(hostname -I | awk '{print $1}')
   echo "Container IP is: $CONTAINER_IP"
 
-  echo "### Configuring gitlab runner for localhost:$GITLAB_PORT"
-
+  echo "### Configuring gitlab runner for $INSTANCE_HOST:$GITLAB_PORT"
   gitlab-runner register --non-interactive  \
     --url="http://localhost:80/"            \
     --docker-network-mode bridge            \
@@ -48,7 +46,7 @@ touch /var/log/configuration.log
     --executor "docker"                     \
     --docker-image alpine:latest            \
     --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
-    --description "Packaged Runner"         \
+    --description "Turnkey packaged Runner" \
     --run-untagged="true"                   \
     --locked="false"                        \
     --access-level="not_protected"          \
