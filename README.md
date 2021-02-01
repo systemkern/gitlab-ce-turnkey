@@ -7,60 +7,38 @@ This is achieved by allowing access to the postgres database, as well as by crea
 
 Further information can be found in the [official Gitlab documentation](https://docs.gitlab.com/omnibus/maintenance/)
 
-Known Issues
---------------------
-1. The postgres password has to be configured in two places
-   * As an environment variable for the postgresql script
-   * In the Gitlab Configuration
-
 
 Running the Image
 --------------------
 To run the latest image from the reigstry
 ```bash
-docker run --name gitlab --rm --detach              \
-    --hostname gitlab.example.com                   \
-    --publish 80:80                                 \
-    --publish 443:443                               \
-    --publish 2222:22                               \
-    --publish 127.0.0.1:5432:5432                   \
-    -e GITLAB_ROOT_PASSWORD=password                \
-    -e POSTGRES_SERVICE_HOST_NAME=localhost         \
-    -e DB_NAME="gitlabhq_production"                \
-    -e DB_USER="gitlab"                             \
-    -e POSTGRES_USER="gitlab-psql"                  \
-    -e POSTGRES_PASSWORD="securesqlpassword"        \
-    -e GITLAB_ADMIN_TOKEN="QVj_FkeHyuJURko2ggZT"    \
-    -e GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
-    registry.gitlab.com/systemkern/gitlab-ce-preconfigured:12-7-0  \
-    && docker logs -f gitlab >> docker.log
-
+docker run --rm -it --name gitlab-turnkey               \
+    --network  bridge                                   \
+    --hostname gitlab.example.com                       \
+    --publish "80:80"                                   \
+    --publish "443:443"                                 \
+    --publish "2222:22"                                 \
+    --publish "127.0.0.1:5432:5432"                     \
+    --volume /var/run/docker.sock:/var/run/docker.sock  \
+    --volume gitlab-opt:/var/opt                        \
+    --env GITLAB_ROOT_PASSWORD=password                 \
+    --env POSTGRES_SERVICE_HOST_NAME=localhost          \
+    --env DB_NAME="gitlabhq_production"                 \
+    --env DB_USER="gitlab"                              \
+    --env POSTGRES_USER="gitlab-psql"                   \
+    --env POSTGRES_PASSWORD="securesqlpassword"         \
+    --env GITLAB_ADMIN_TOKEN="test-admin-token"         \
+    --env GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
+  gitlab-ce-turnkey:snapshot
 ```
 
+### Verify the application
 
-To build the image execute: 
-```bash
-docker build --tag registry.gitlab.com/systemkern/gitlab-ce-preconfigured:latest .
-```
+in you browser navigate to http://localhost/
 
-To build and run the image locally execute:
-```bash
-image="gitlab-ce-preconfigured:nightly"
-docker stop gitlab-ce | true
-docker build --tag $image .
-docker run --name gitlab-ce --rm --detach           \
-    --hostname gitlab.example.com                   \
-    --publish 81:80                                 \
-    -e GITLAB_ROOT_PASSWORD=password                \
-    -e GITLAB_ADMIN_TOKEN="QVj_FkeHyuJURko2ggZT"    \
-    $image                                          \
-
-```
 
 
 ### Environment
-
-
 
 To verify container status, it takes some time to come in healthy state
 ```bash
@@ -116,8 +94,18 @@ postgres=#
 ```
 
 
-### Verify the application
+Building the Image
+--------------------
+To build the image execute:
+```bash
+bin/build-run
+```
 
-in you browser navigate to http://localhost/
+To build and run the image locally execute: `bin/build-run`
 
 
+Known Issues
+--------------------
+1. The postgres password has to be configured in two places
+   * As an environment variable for the postgresql script
+   * In the Gitlab Configuration
