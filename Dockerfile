@@ -20,9 +20,8 @@ RUN apt-get update                          && \
     apt-get install --yes gitlab-runner     && \
     apt-get clean                           && \
     gitlab-runner --version
-ADD assets/ /assets/
-RUN chmod +x /assets/turnkey-wrapper.sh
 
+ADD assets/ /assets/
 
 # Volumes defined by parent image:
 # VOLUME ["/etc/gitlab", "/var/opt/gitlab", "/var/log/gitlab"]

@@ -9,7 +9,7 @@ set -m
 
 
 ### Gitlab dynamic variables created from ENV mentioned in Dockerfile
-export GITLAB_ROOT_URL="http://$INSTANCE_HOST:80"
+export GITLAB_ROOT_URL=${GITLAB_ROOT_URL:-"http://$INSTANCE_HOST"}
 
 export GITLAB_OMNIBUS_CONFIG="\
     external_url '$GITLAB_ROOT_URL';                                \
@@ -56,6 +56,9 @@ touch /var/log/configuration.log
 } >/var/log/configuration.log
 
 rm -f /var/log/configuration.lock
+
+pip3 install -r /assets/test/requirements.txt
+python3 /assets/test/test-login.py
 
 #Bring the first process to foreground
 fg %1

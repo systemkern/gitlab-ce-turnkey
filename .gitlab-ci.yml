@@ -7,11 +7,10 @@ build turnkey:
       - assets/**/*
       - .gitlab-ci.yml
       - Dockerfile
-  services:
-    - docker:dind
+  services: [ "docker:dind" ]
   parallel:
     matrix:
-      # define the gitlab versions to build
+      # define the Gitlab versions to build
       - TAG:
         - "latest"
         - "12.7.0-ce.0"

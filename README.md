@@ -10,7 +10,7 @@ Further information can be found in the [official Gitlab documentation](https://
 
 Running the Image
 --------------------
-To run the latest image from the reigstry
+To run the latest image from the registry
 ```bash
 docker run --rm -it --name gitlab-turnkey               \
     --network  bridge                                   \
