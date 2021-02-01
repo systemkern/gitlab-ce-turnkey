@@ -1,0 +1,8 @@
+job:
+  image: docker:latest
+  services: ["docker:dind"]
+  script: |
+    echo "FROM alpine:latest" > Dockerfile
+    echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username="$CI_REGISTRY_USER" --password-stdin
+    docker build --tag $CI_REGISTRY_IMAGE -f Dockerfile .
+    docker push "$CI_REGISTRY_IMAGE"

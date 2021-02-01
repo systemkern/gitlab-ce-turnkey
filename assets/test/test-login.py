@@ -6,7 +6,7 @@ import os
 user = "root"
 pwd = os.environ['GITLAB_ROOT_PASSWORD']
 
-gitlab_external_url = os.environ['GITLAB_ROOT_URL']
+gitlab_external_url = "http://localhost:"+os.environ['GITLAB_PORT']
 login_url=gitlab_external_url+"/oauth/token"
 
 
@@ -31,4 +31,4 @@ response = json.loads(raw_response.text)
 
 assert response.get("access_token") is not None
 
-print("Smoke test successful")
+print("Login test successful")

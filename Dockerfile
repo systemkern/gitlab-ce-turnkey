@@ -2,13 +2,12 @@
 FROM gitlab/gitlab-ce:latest
 MAINTAINER Systemkern
 
-ENV PGCONF_TEMP /opt/gitlab/embedded/cookbooks/postgresql/templates/default/postgresql.conf.erb
-ENV PGCONF /opt/gitlab/etc/gitlab.rb.template
 
-# TODO: replace this ENV variable with parsing from GITLAB_ROOT_URL
-ENV INSTANCE_HOST "localhost"
-# TODO: replace this ENV variable with parsing from GITLAB_ROOT_URL
-ENV GITLAB_PORT "80"
+###
+### Modify Gitlab Omnibus script
+###
+RUN mv /assets/wrapper /assets/gitlab-wrapper
+
 
 ###
 ### GITLAB RUNNER

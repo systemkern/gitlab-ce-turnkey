@@ -1,35 +1,56 @@
 #!/bin/bash
-set -m
+########################################
+set -u # error on usage of undefined variables
+########################################
+echo "GITLAB_ROOT_URL: $GITLAB_ROOT_URL"
 
+export GITLAB_PROTOCOL="$(echo "$GITLAB_ROOT_URL" | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+export GITLAB_NOPROTO_URL="$(echo ${GITLAB_ROOT_URL/"$GITLAB_PROTOCOL"/})"
+export RM_USER="$(echo "$GITLAB_NOPROTO_URL" | grep @ | cut -d@ -f1)"
+export GITLAB_HOSTPORT="$(echo ${GITLAB_NOPROTO_URL/"$RM_USER"@/} | cut -d/ -f1)"
+export GITLAB_HOST="$(echo "$GITLAB_HOSTPORT" | sed -e 's,:.*,,g')"
+export GITLAB_PORT="$(echo "$GITLAB_HOSTPORT" | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
 
-### The script exports environment variables created from ENV of Dockerfile.
-### These needs to be part of wrapper as if at run time any base ENV is replaced by -e ,
-###   it does not change other ENV variables created from them
-### This script gets copied to /etc/bash.bashrc to set env after docker run
+echo "GITLAB_PROTOCOL:$GITLAB_PROTOCOL"
+echo "GITLAB_HOST:$GITLAB_HOST"
+echo "GITLAB_PORT:$GITLAB_PORT"
 
 
 ### Gitlab dynamic variables created from ENV mentioned in Dockerfile
-export GITLAB_ROOT_URL=${GITLAB_ROOT_URL:-"http://$INSTANCE_HOST"}
+export DOCKER_REGISTRY_PORT=${DOCKER_REGISTRY_PORT:-5050}
+export GITLAB_ROOT_URL=${GITLAB_ROOT_URL:-"http://$GITLAB_HOSTPORT"}
+export DOCKER_REGISTRY="$GITLAB_HOST:${DOCKER_REGISTRY_PORT}"
+export DOCKER_REGISTRY_EXTERNAL_URL="http://${DOCKER_REGISTRY}"
 
 export GITLAB_OMNIBUS_CONFIG="\
     external_url '$GITLAB_ROOT_URL';                                \
     nginx['redirect_http_to_https'] = false;                        \
+    registry_external_url '$DOCKER_REGISTRY_EXTERNAL_URL';          \
+    registry_nginx['enable'] = true;                                \
+    registry_nginx['listen_port'] = $DOCKER_REGISTRY_PORT;          \
+    redis['bind'] = '127.0.0.1';                                    \
+    redis['port'] = 6379;                                           \
     "
 
-# Start the first script that comes with gitlab image in background, as it never ends, it waits for all child process sigterm,
-# We can not run our script after checking it's exit status.
-/assets/wrapper >/dev/null &
+echo "##########################################"
+echo "$GITLAB_OMNIBUS_CONFIG"
+echo "##########################################"
+
+# Start the first script that comes with gitlab image in background,
+# it never ends, it waits for all child process sigterm,
+# Therefore we put it in the background with the '&'
+/assets/gitlab-wrapper >/dev/null &
 
 # Wait for Gitlab to enable the database
 touch /var/log/configuration.lock
 touch /var/log/configuration.log
 {
   echo "### $(date) Waiting for Gitlab Runners API. The runners API is running in a separate process from the normal API"
-  until [ "$(curl --silent --output /dev/null -w ''%{http_code}'' localhost:80/runners)" = "302" ]; do
+  until [ "$(curl --silent --output /dev/null -w ''%{http_code}'' "localhost:$GITLAB_PORT/runners")" = "302" ]; do
     printf '.'
     sleep 5;
   done
-  echo "### $(date) Expecting code 302; received: $(curl --silent --output /dev/null -w ''%{http_code}'' localhost:80/runners)"
+  echo "### $(date) Expecting code 302; received: $(curl --silent --output /dev/null -w ''%{http_code}'' "localhost:$GITLAB_PORT/runners")"
 
   echo "### Getting Gitlab runners registration token from Gitlab."
   TOKEN=$(gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token" | tr -d '\r')
@@ -38,9 +59,9 @@ touch /var/log/configuration.log
   CONTAINER_IP=$(hostname -I | awk '{print $1}')
   echo "Container IP is: $CONTAINER_IP"
 
-  echo "### Configuring gitlab runner for $INSTANCE_HOST:$GITLAB_PORT"
+  echo "### Configuring gitlab runner for $GITLAB_HOSTPORT"
   gitlab-runner register --non-interactive  \
-    --url="http://localhost:80/"            \
+    --url="http://localhost:$GITLAB_PORT/"  \
     --docker-network-mode bridge            \
     --registration-token "$TOKEN"           \
     --executor "docker"                     \
@@ -50,15 +71,12 @@ touch /var/log/configuration.log
     --run-untagged="true"                   \
     --locked="false"                        \
     --access-level="not_protected"          \
-    --docker-extra-hosts "$INSTANCE_HOST:$CONTAINER_IP"
+    --docker-extra-hosts "$GITLAB_HOST:$CONTAINER_IP"
 
   gitlab-runner start
 } >/var/log/configuration.log
 
 rm -f /var/log/configuration.lock
-
-pip3 install -r /assets/test/requirements.txt
-python3 /assets/test/test-login.py
 
 #Bring the first process to foreground
 fg %1
