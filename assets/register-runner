@@ -1,0 +1,38 @@
+set -u
+
+# Wait for Gitlab to enable the database
+touch /var/log/configuration.lock
+touch /var/log/configuration.log
+{
+  echo "### Getting Gitlab runners registration token from Gitlab."
+  TOKEN=$(gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token" | tr -d '\r')
+  echo TOKEN="$TOKEN"
+
+  # Clear runner config
+  echo '' > /etc/gitlab-runner/config.toml
+  sleep 10 # allow the gitlab-runner to reload the now empty config file
+
+  DOCKER_NETWORK=$(docker inspect "$(hostname)" -f "{{json .NetworkSettings.Networks}}" | jq -r 'keys[0]')
+  CONTAINER_IP=$(hostname -I | awk '{print $1}')
+
+  echo "### Configuring gitlab runner for $GITLAB_HOSTPORT"
+  gitlab-runner register --non-interactive  \
+    --url="http://$GITLAB_HOSTPORT/"        \
+    --registration-token "$TOKEN"           \
+    --docker-image alpine:latest            \
+    --docker-network-mode "$DOCKER_NETWORK" \
+    --docker-privileged="true"              \
+    --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
+    --description "Turnkey packaged Runner" \
+    --executor "docker"                     \
+    --run-untagged="true"                   \
+    --locked="false"                        \
+    --tag-list "docker,local-docker"        \
+    --access-level="not_protected"          \
+    --docker-extra-hosts "$GITLAB_HOST:$CONTAINER_IP"
+      echo "### Configuring gitlab runner for localhost:$GITLAB_PORT"
+
+  gitlab-runner start
+} >/var/log/configuration.log
+
+rm -f /var/log/configuration.lock
