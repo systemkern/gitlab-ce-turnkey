@@ -32,4 +32,4 @@ ADD assets/ /assets/
 # VOLUME ["/etc/gitlab", "/var/opt/gitlab", "/var/log/gitlab"]
 
 # Wrapper to handle additional script to run after default gitlab image's /assets/wrapper
-CMD ["/assets/turnkey-wrapper.sh"]
+CMD ["/assets/turnkey-wrapper"]
