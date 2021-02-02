@@ -2,7 +2,6 @@
 FROM gitlab/gitlab-ce:latest
 MAINTAINER Systemkern
 
-
 ###
 ### Modify Gitlab Omnibus script
 ###
@@ -30,6 +29,8 @@ ADD assets/ /assets/
 
 # Volumes defined by parent image:
 # VOLUME ["/etc/gitlab", "/var/opt/gitlab", "/var/log/gitlab"]
+# Expose the Gitlab runners' configuration
+VOLUME ["/etc/gitlab-runner/"]
 
 # Wrapper to handle additional script to run after default gitlab image's /assets/wrapper
 CMD ["/assets/turnkey-wrapper"]
