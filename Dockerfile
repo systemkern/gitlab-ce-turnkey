@@ -15,6 +15,17 @@ RUN apt-get update                          && \
 
 
 ###
+### Install curl, jq, and docker
+###
+RUN apt-get -y install curl apt-transport-https ca-certificates software-properties-common jq    && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add                        && \
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable" |  \
+                        tee /etc/apt/sources.list.d/docker.list                                  && \
+    apt-get update                                                                               && \
+    apt-get install -y docker-ce
+
+
+###
 ### Modify Gitlab Omnibus wrapper script
 ###
 # Insert the prepare-env script before Gitlab's omnibus wrapper
@@ -25,9 +36,9 @@ RUN mv /assets/wrapper /assets/omnibus-wrapper              && \
     cat > /assets/wrapper < /assets/prepare-env             && \
     head -n -6 /assets/omnibus-wrapper >> /assets/wrapper   && \
     cat >> /assets/wrapper < /assets/register-runner        && \
-    tail -n -6 /assets/omnibus-wrapper >> /assets/wrapper
-RUN chmod +x /assets/wrapper
-RUN cat /assets/wrapper
+    tail -n -6 /assets/omnibus-wrapper >> /assets/wrapper   && \
+    chmod +x /assets/wrapper                                && \
+    cat /assets/wrapper
 
 
 # Volumes defined by parent image:

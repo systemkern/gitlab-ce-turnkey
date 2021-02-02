@@ -19,7 +19,7 @@ touch /var/log/configuration.log
   gitlab-runner register --non-interactive  \
     --url="http://$GITLAB_HOSTPORT/"        \
     --registration-token "$TOKEN"           \
-    --docker-image alpine:latest            \
+    --docker-image "alpine:latest"          \
     --docker-network-mode "$DOCKER_NETWORK" \
     --docker-privileged="true"              \
     --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
