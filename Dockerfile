@@ -7,6 +7,12 @@ MAINTAINER Systemkern
 ### Modify Gitlab Omnibus script
 ###
 RUN mv /assets/wrapper /assets/gitlab-wrapper
+# Remove the wait for sigterm from the gitlab wrapper script to make it "interactive"
+# The our own wrapper will handle starting and stopping of services
+RUN sed -i "/# Tail all logs/d" /assets/gitlab-wrapper
+RUN sed -i "/# gitlab-ctl tail &/d" /assets/gitlab-wrapper
+RUN sed -i "/# Wait for SIGTERM/d" /assets/gitlab-wrapper
+RUN sed -i "/wait/d" /assets/gitlab-wrapper
 
 
 ###

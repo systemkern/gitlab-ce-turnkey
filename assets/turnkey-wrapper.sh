@@ -37,8 +37,7 @@ echo "$GITLAB_OMNIBUS_CONFIG"
 echo "##########################################"
 
 # Start the first script that comes with gitlab image in background,
-# it never ends, it waits for all child process sigterm,
-# Therefore we put it in the background with the '&'
+# it never ends, therefore we put it in the background with the '&'
 /assets/gitlab-wrapper >/dev/null &
 
 # Wait for Gitlab to enable the database
@@ -78,5 +77,8 @@ touch /var/log/configuration.log
 
 rm -f /var/log/configuration.lock
 
-#Bring the first process to foreground
-fg %1
+# Tail all logs
+gitlab-ctl tail &
+
+# Wait for SIGTERM
+wait

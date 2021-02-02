@@ -11,6 +11,9 @@ set -x # output all commands
 
 docker build --tag gitlab-ce-turnkey:snapshot .
 
+HOST=$(hostname | awk '{print $1}')
+echo "HOST is: $HOST"
+
 docker run --rm -it --name gitlab-turnkey               \
     --network  bridge                                   \
     --hostname gitlab.example.com                       \
@@ -22,8 +25,7 @@ docker run --rm -it --name gitlab-turnkey               \
     --publish "127.0.0.1:5432:5432"                     \
     --volume /var/run/docker.sock:/var/run/docker.sock  \
     --volume gitlab-opt:/var/opt                        \
-    --env GITLAB_ROOT_URL="http://systemkern:10080"     \
-    --env GITLAB_PORT="10080"                           \
+    --env GITLAB_ROOT_URL="http://$HOST:10080"          \
     --env GITLAB_ROOT_PASSWORD=password                 \
     --env GITLAB_ADMIN_TOKEN="test-admin-token"         \
     --env GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
