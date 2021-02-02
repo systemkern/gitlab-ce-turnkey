@@ -1,5 +1,7 @@
 #!/bin/bash
 ########################################
+set -o pipefail
+set -e # exit on immediately on every error
 set -u # error on usage of undefined variables
 ########################################
 echo "GITLAB_ROOT_URL: $GITLAB_ROOT_URL"
@@ -45,11 +47,11 @@ touch /var/log/configuration.lock
 touch /var/log/configuration.log
 {
   echo "### $(date) Waiting for Gitlab Runners API. The runners API is running in a separate process from the normal API"
-  until [ "$(curl --silent --output /dev/null -w ''%{http_code}'' "localhost:$GITLAB_PORT/runners")" = "302" ]; do
+  until [ "$(curl --silent --output /dev/null -w ''%{http_code}'' "$GITLAB_HOSTPORT/runners")" = "302" ]; do
     printf '.'
     sleep 5;
   done
-  echo "### $(date) Expecting code 302; received: $(curl --silent --output /dev/null -w ''%{http_code}'' "localhost:$GITLAB_PORT/runners")"
+  echo "### $(date) Expecting code 302; received: $(curl --silent --output /dev/null -w ''%{http_code}'' "$GITLAB_HOSTPORT/runners")"
 
   echo "### Getting Gitlab runners registration token from Gitlab."
   TOKEN=$(gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token" | tr -d '\r')
@@ -60,7 +62,7 @@ touch /var/log/configuration.log
 
   echo "### Configuring gitlab runner for $GITLAB_HOSTPORT"
   gitlab-runner register --non-interactive  \
-    --url="http://localhost:$GITLAB_PORT/"  \
+    --url="http://$GITLAB_HOSTPORT/"        \
     --docker-network-mode bridge            \
     --registration-token "$TOKEN"           \
     --executor "docker"                     \

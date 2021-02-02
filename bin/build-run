@@ -26,9 +26,13 @@ docker run --rm -it --name gitlab-turnkey               \
     --volume /var/run/docker.sock:/var/run/docker.sock  \
     --volume gitlab-opt:/var/opt                        \
     --env GITLAB_ROOT_URL="http://$HOST:10080"          \
+    --env GITLAB_HTTPS="false"                          \
+    --env SSL_SELF_SIGNED='false'                       \
     --env GITLAB_ROOT_PASSWORD=password                 \
     --env GITLAB_ADMIN_TOKEN="test-admin-token"         \
     --env GITLAB_SECRETS_DB_KEY_BASE="secret11111111112222222222333333333344444444445555555555666666666612345" \
+    --env TZ='Austria/Vienna'                           \
+    --env GITLAB_TIMEZONE='Vienna'                      \
     --env POSTGRES_SERVICE_HOST_NAME=localhost          \
     --env DB_NAME="gitlabhq_production"                 \
     --env DB_USER="gitlab"                              \
