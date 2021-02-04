@@ -1,7 +1,7 @@
 
 [![Source Repo](https://img.shields.io/badge/fork%20on-gitlab-important?logo=gitlab)](https://gitlab.com/systemkern/gitlab-ce-turnkey)
 [![Gitlab Pipelines](https://gitlab.com/systemkern/gitlab-ce-turnkey/badges/master/pipeline.svg)](https://gitlab.com/systemkern/gitlab-ce-turnkey/-/pipelines)
-[![Dockerhub @systemkern](https://img.shields.io/docker/pulls/systemkern/gitlab-ce-turnkey)](https://hub.docker.com/u/systemkern/gitlab-ce-turnkey)
+[![Dockerhub @systemkern](https://img.shields.io/docker/pulls/systemkern/gitlab-ce-turnkey)](https://hub.docker.com/r/systemkern/gitlab-ce-turnkey)
 [![Twitter @systemkern](https://img.shields.io/badge/follow-%40systemkern-blue?logo=twitter)](https://twitter.com/systemkern)
 
 
