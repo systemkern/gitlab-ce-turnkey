@@ -1,6 +1,6 @@
 # https://gitlab.com/gitlab-org/omnibus-gitlab/-/tree/master/docker
 FROM gitlab/gitlab-ce:latest
-MAINTAINER Systemkern
+MAINTAINER systemkern
 
 ###
 ### GITLAB RUNNER

@@ -1,22 +1,40 @@
 build turnkey:
-  image: docker:latest
   stage: build
+  image: docker:stable
   only:
-    refs: [ "master" ]
+    refs: ["master"]
     changes:
       - assets/**/*
       - .gitlab-ci.yml
       - Dockerfile
-  services: [ "docker:dind" ]
+  services: ["docker:dind"]
   parallel:
     matrix:
-      # define the Gitlab versions to build
-      - TAG:
+      - TAG: # define the Gitlab versions to build
         - "latest"
+        - "13.8.2-ce.0"
+        - "12.10.14-ce.0"
         - "12.7.0-ce.0"
-  script:
-    - sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" Dockerfile
-    - cat Dockerfile
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username="$CI_REGISTRY_USER" --password-stdin
-    - docker build --tag "$CI_REGISTRY_IMAGE:$TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:$TAG"
+  script: |
+    sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" Dockerfile
+    cat Dockerfile
+    docker build --tag "$CI_REGISTRY_IMAGE:$TAG" .
+    echo "$CI_REGISTRY_PASSWORD" | docker login --username="$CI_REGISTRY_USER" --password-stdin
+    docker push "$CI_REGISTRY_IMAGE:$TAG"
+
+
+update dockerhub readme:
+  stage: deploy
+  image: docker:stable
+  only:
+    refs: ["master"]
+    changes: ["README.md"]
+  services: ["docker:dind"]
+  script: |
+    docker run                                          \
+      --env DOCKERHUB_USERNAME="$CI_REGISTRY_USER"      \
+      --env DOCKERHUB_PASSWORD="$CI_REGISTRY_PASSWORD"  \
+      --env DOCKERHUB_REPOSITORY="$CI_PROJECT_PATH"     \
+      --env README_FILEPATH="$(pwd)/README.md"          \
+      --volume "$(pwd):$(pwd)"                          \
+      peterevans/dockerhub-description:2

@@ -14,14 +14,13 @@ docker build --tag gitlab-ce-turnkey:snapshot .
 HOST=$(hostname | awk '{print $1}')
 echo "HOST is: $HOST"
 
-exec docker run --rm -it --name gitlab-turnkey                   \
+exec docker run --rm -it --name gitlab-turnkey              \
     --network "bridge"                                      \
     --publish "80:80"                                       \
     --publish "10080:10080"                                 \
     --publish "443:443"                                     \
     --publish "2222:22"                                     \
     --publish "5050:5050"                                   \
-    --publish "127.0.0.1:5432:5432"                         \
     --volume "/var/run/docker.sock:/var/run/docker.sock"    \
     --env GITLAB_ROOT_URL="http://$HOST:10080"              \
     --env GITLAB_HTTPS="false"                              \

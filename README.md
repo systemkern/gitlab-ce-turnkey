@@ -1,9 +1,12 @@
+[![Twitter @systemkern](https://img.shields.io/badge/follow-%40systemkern-blue?logo=twitter)](https://twitter.com/systemkern)
+
 Gitlab CE Turnkey Edition 🗝
 ====================
+> This project is a community project. It is neither officially supportet nor endorsed by Gitlab.
 
-![Logo](public/logo/gitlab-turnkey-logo.png)
+<img src=https://gitlab.com/systemkern/gitlab-ce-turnkey/-/raw/master/public/logo/gitlab-turnkey-logo.png height="200px">
 
-This Project helps in building a gitlab installation which is already preconfigured out of the box.
+This Project helps in building a Gitlab installation which is already preconfigured out of the box.
 
 This is achieved by allowing access to the postgres database, as well as by creating users and ci-runner registration tokens
 
@@ -28,7 +31,6 @@ docker run --rm -it --name gitlab-turnkey                   \
     --publish "443:443"                                     \
     --publish "2222:22"                                     \
     --publish "5050:5050"                                   \
-    --publish "127.0.0.1:5432:5432"                         \
     --volume "/var/run/docker.sock:/var/run/docker.sock"    \
     --env GITLAB_ROOT_URL="http://$HOST:10080"              \
     --env GITLAB_HTTPS="false"                              \
