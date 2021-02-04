@@ -1,10 +1,15 @@
+
+[![Source Repo](https://img.shields.io/badge/fork%20on-gitlab-important?logo=gitlab)](https://gitlab.com/systemkern/gitlab-ce-turnkey)
+[![Gitlab Pipelines](https://gitlab.com/systemkern/gitlab-ce-turnkey/badges/master/pipeline.svg)](https://gitlab.com/systemkern/gitlab-ce-turnkey/-/pipelines)
+[![Dockerhub @systemkern](https://img.shields.io/docker/pulls/systemkern/gitlab-ce-turnkey)](https://hub.docker.com/u/systemkern/gitlab-ce-turnkey)
 [![Twitter @systemkern](https://img.shields.io/badge/follow-%40systemkern-blue?logo=twitter)](https://twitter.com/systemkern)
+
 
 Gitlab CE Turnkey Edition 🗝
 ====================
-> This project is a community project. It is neither officially supportet nor endorsed by Gitlab.
+> This project is a community project. It is neither officially endorsed nor supportet by Gitlab.
 
-<img src=https://gitlab.com/systemkern/gitlab-ce-turnkey/-/raw/master/public/logo/gitlab-turnkey-logo.png height="200px">
+<img src="https://gitlab.com/systemkern/gitlab-ce-turnkey/-/raw/master/public/logo/gitlab-turnkey-logo.png" height="200px" loading="lazy">
 
 This Project helps in building a Gitlab installation which is already preconfigured out of the box.
 
@@ -14,7 +19,7 @@ Further information can be found in the [official Gitlab documentation](https://
 
 
 **Canonical source:**
-This project's canonical source where all development takes place is hosted on [gitLab.com/systemkern/gitlab-ce-turnkey](https://gitlab.com/systemkern/gitlab-ce-turnkey).
+This project's canonical source where all development takes place is hosted on [gitlab.com/systemkern/gitlab-ce-turnkey](https://gitlab.com/systemkern/gitlab-ce-turnkey).
 
 **Contribution:**
 Contributions in the form of bug reports, feature requests, and merge requests are welcome.
