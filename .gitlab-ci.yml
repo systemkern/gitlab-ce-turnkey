@@ -11,7 +11,6 @@ build turnkey:
   parallel:
     matrix:
       - TAG: # define the Gitlab versions to build
-        - "latest"
         - "13.8.2-ce.0"
         - "12.10.14-ce.0"
         - "12.7.0-ce.0"
