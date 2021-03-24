@@ -2,11 +2,12 @@ build turnkey:
   stage: build
   image: docker:stable
   only:
-    refs: ["release/**"]
+    variables:
+      - $CI_COMMIT_REF_NAME =~ /^release\//  # match every branch "release/**"
   services: ["docker:dind"]
   script: |
-    sed -i "s/gitlab-ce:latest/gitlab-ce:$TAG/" Dockerfile
-    cat Dockerfile
+    # use $CI_COMMIT_REF_NAME without "release/" prefix as Docker tag
+    export TAG=${CI_COMMIT_REF_NAME:8}
     docker build --tag "$CI_REGISTRY_IMAGE:$TAG" .
     echo "$CI_REGISTRY_PASSWORD" | docker login --username="$CI_REGISTRY_USER" --password-stdin
     docker push "$CI_REGISTRY_IMAGE:$TAG"
