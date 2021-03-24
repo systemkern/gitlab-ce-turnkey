@@ -8,9 +8,11 @@
 
 Gitlab CE Turnkey Edition 🗝
 ====================
-> This project is a community project. It is neither officially endorsed nor supportet by Gitlab.
+> This is a community project. It is neither officially endorsed nor supportet by Gitlab.
 
+<div align=center>
 <img src="https://gitlab.com/systemkern/gitlab-ce-turnkey/-/raw/master/public/logo/gitlab-turnkey-logo.png" height="200px" loading="lazy">
+</div>
 
 This Project helps in building a Gitlab installation which is already preconfigured out of the box.
 
